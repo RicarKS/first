@@ -1,6 +1,7 @@
 package com.example.ksmusic_md;
 
 
+import android.content.DialogInterface;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.NavigationView;
@@ -19,7 +20,10 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
@@ -114,15 +118,29 @@ public class MusicListActivity extends AppCompatActivity {
                         "感谢5401张文彬与赵华清的大力支持！");
                 builder.show();
                 break;
+            case R.id.add:
+                AlertDialog.Builder diaLog = new AlertDialog.Builder(MusicListActivity.this);
+                diaLog.setTitle("添加新的歌单");
+                final EditText editText = new EditText(MusicListActivity.this);
+                editText.setHint("歌单名称");
+                editText.setMaxLines(1);
+                diaLog.setView(editText);
+                diaLog.setCancelable(true);
+                diaLog.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String name = editText.getText().toString();
+                        SongListInfo songListInfo = MusicUtils.getNewSongList(name);
+                        MusicUtils.SongListInfos.add(songListInfo);
+                    }
+                });
+                diaLog.show();
             default:
         }
         return true;
     }
 
     private void refreshMusicList(){
-        MusicUtils.initMusicList();
-        musicAdapter.setmList(MusicUtils.MUSIC_LIST);
-        musicAdapter.notifyDataSetChanged();
         swipeRefresh.setRefreshing(false);
     }
 
@@ -157,6 +175,26 @@ public class MusicListActivity extends AppCompatActivity {
         musicAdapter.notifyDataSetChanged();
         collapsingToolbarLayout.setTitle("我喜欢的音乐");
         Glide.with(MyApplication.getContext()).load(R.drawable.my_favorite_pic).into(songListPic);
+        RecyclerViewUtil recyclerViewUtil = new RecyclerViewUtil(MusicListActivity.this,recyclerView);
+        recyclerViewUtil.setOnItemLongClickListener(new RecyclerViewUtil.OnItemLongClickListener() {
+            @Override
+            public void onItemLongClick(final int position, View view) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MusicListActivity.this);
+                builder.setTitle("收藏到歌单");
+                String[] names = new String[MusicUtils.SongListInfos.size()];
+                for (int i = 0; i < MusicUtils.SongListInfos.size(); i++){
+                    names[i] = MusicUtils.SongListInfos.get(i).getName();
+                }
+                builder.setCancelable(true);
+                builder.setItems(names, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        MusicUtils.addToSongList(MusicUtils.getMusicListFromSongListId(903).get(position).getSongId(), MusicUtils.SongListInfos.get(which).getSongListId());
+                    }
+                });
+                builder.show();
+            }
+        });
     }
 
     public void showLocalMusic(){
@@ -186,8 +224,29 @@ public class MusicListActivity extends AppCompatActivity {
                 return false;
             }
         });
+        collapsingToolbarLayout.setTitle("本地音乐");
         musicAdapter.setmList(MusicUtils.MUSIC_LIST);
         musicAdapter.notifyDataSetChanged();
+        RecyclerViewUtil recyclerViewUtil = new RecyclerViewUtil(MusicListActivity.this,recyclerView);
+        recyclerViewUtil.setOnItemLongClickListener(new RecyclerViewUtil.OnItemLongClickListener() {
+            @Override
+            public void onItemLongClick(final int position, View view) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MusicListActivity.this);
+                builder.setTitle("收藏到歌单");
+                String[] names = new String[MusicUtils.SongListInfos.size()];
+                for (int i = 0; i < MusicUtils.SongListInfos.size(); i++){
+                    names[i] = MusicUtils.SongListInfos.get(i).getName();
+                }
+                builder.setCancelable(true);
+                builder.setItems(names, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        MusicUtils.addToSongList(MusicUtils.MUSIC_LIST.get(position).getSongId(), MusicUtils.SongListInfos.get(which).getSongListId());
+                    }
+                });
+                builder.show();
+            }
+        });
     }
 
     public void showSongList(){
@@ -205,6 +264,16 @@ public class MusicListActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);
         }
+        swipeRefresh = (SwipeRefreshLayout)findViewById(R.id.song_list_swipe_refresh);
+        swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                songListAdapter.setList(MusicUtils.SongListInfos);
+                songListAdapter.notifyDataSetChanged();
+                swipeRefresh.setRefreshing(false);
+            }
+        });
         collapsingToolbarLayout.setTitle("歌单");
         recyclerView = (RecyclerView)findViewById(R.id.song_list_recycler_view);
         GridLayoutManager layoutManager = new GridLayoutManager(this,2);
@@ -252,9 +321,33 @@ public class MusicListActivity extends AppCompatActivity {
                 }
             }
         });
+        recyclerViewUtil.setOnItemLongClickListener(new RecyclerViewUtil.OnItemLongClickListener() {
+            @Override
+            public void onItemLongClick(int position, View view) {
+                final SongListInfo songListInfo = MusicUtils.SongListInfos.get(position);
+                AlertDialog.Builder builder = new AlertDialog.Builder(MusicListActivity.this);
+                builder.setTitle("删除歌单" + songListInfo.getName() + "?");
+                builder.setCancelable(true);
+                builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        MusicUtils.removeSongListInfo(songListInfo.getSongListId());
+                        songListAdapter.setList(MusicUtils.SongListInfos);
+                        songListAdapter.notifyDataSetChanged();
+                    }
+                });
+                builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                });
+                builder.show();
+            }
+        });
     }
 
-    public void showSongListMusic(int songListId){
+    public void showSongListMusic(final int songListId){
         //MenuItem item = (MenuItem)findViewById(R.id.refresh);
         //item.setTitle("添加");
         navView.setCheckedItem(R.id.song_list_nav_view);
@@ -285,5 +378,33 @@ public class MusicListActivity extends AppCompatActivity {
         musicAdapter.notifyDataSetChanged();
         collapsingToolbarLayout.setTitle(MusicUtils.getSongListNameForId(songListId));
         Glide.with(MyApplication.getContext()).load(R.drawable.my_favorite_pic).into(songListPic);
+        RecyclerViewUtil recyclerViewUtil = new RecyclerViewUtil(MusicListActivity.this,recyclerView);
+        recyclerViewUtil.setOnItemLongClickListener(new RecyclerViewUtil.OnItemLongClickListener() {
+            @Override
+            public void onItemLongClick(final int position, View view) {
+                if (view.getId() != R.id.music_list_pic) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MusicListActivity.this);
+                    builder.setTitle("删除音乐？");
+                    builder.setMessage("从" + MusicUtils.getSongListNameForId(songListId) + "中删除" + MusicUtils.getMusicListFromSongListId(songListId).get(position).getName() + "?");
+                    builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            MusicUtils.delForSongList(MusicUtils.getMusicListFromSongListId(songListId).get(position).getSongId(), songListId);
+                            musicAdapter.setmList(MusicUtils.getMusicListFromSongListId(songListId));
+                            musicAdapter.notifyDataSetChanged();
+                        }
+                    });
+                    builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    });
+                    builder.show();
+                } else {
+
+                }
+            }
+        });
     }
 }

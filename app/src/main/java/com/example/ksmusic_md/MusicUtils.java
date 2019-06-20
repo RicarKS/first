@@ -19,6 +19,7 @@ import java.util.List;
 public class MusicUtils {
     public static List<Music> MUSIC_LIST = new ArrayList<Music>();
     public static  List<SongListInfo> SongListInfos = new ArrayList<SongListInfo>();
+    public static int currentSongListId;
 
     public static List<Music> getMusicList(Context context){
         List<Music> musicList = new ArrayList<Music>();
@@ -76,11 +77,8 @@ public class MusicUtils {
 
     public static void initMusicList(){
         LitePal.getDatabase();
-        //Toast.makeText(MyApplication.getContext(),"initMusicList()",Toast.LENGTH_LONG).show();
         MUSIC_LIST = LitePal.findAll(Music.class);
-        //Toast.makeText(MyApplication.getContext(),String.valueOf(MUSIC_LIST.size()),Toast.LENGTH_LONG).show();
         if (MUSIC_LIST.isEmpty()){
-            //Toast.makeText(MyApplication.getContext(),"MUSIC_LIST == null",Toast.LENGTH_LONG).show();
             MUSIC_LIST = getMusicList(MyApplication.getContext());
         }
     }
@@ -98,48 +96,29 @@ public class MusicUtils {
         SongListInfo myFavorite = new SongListInfo();
         SongListInfo songListInfo = new SongListInfo();
         SongListInfo songListInfo1 = new SongListInfo();
-        SongListInfo songListInfo2 = new SongListInfo();
-        SongListInfo songListInfo3 = new SongListInfo();
-        SongListInfo songListInfo4 = new SongListInfo();
+
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
         String currentTime = sdf.format(date);
+
         myFavorite.setSongListId(903);
         myFavorite.setName("我喜欢的音乐");
         myFavorite.setBuildTime(currentTime);
+        myFavorite.save();
+
+        date = new Date(System.currentTimeMillis());
+        currentTime = sdf.format(date);
         songListInfo.setSongListId((int)System.currentTimeMillis());
         songListInfo.setName("XT");
         songListInfo.setBuildTime(currentTime);
         songListInfo.save();
+
         date = new Date(System.currentTimeMillis());
-        sdf = new SimpleDateFormat("yy年MM月dd日 HH:mm:ss");
         currentTime = sdf.format(date);
         songListInfo1.setSongListId((int)System.currentTimeMillis() + 1);
         songListInfo1.setBuildTime(currentTime);
         songListInfo1.setName("Unique");
         songListInfo1.save();
-        date = new Date(System.currentTimeMillis());
-        sdf = new SimpleDateFormat("yy年MM月dd日 HH:mm:ss");
-        currentTime = sdf.format(date);
-        songListInfo2.setSongListId((int)System.currentTimeMillis() + 2);
-        songListInfo2.setBuildTime(currentTime);
-        songListInfo2.setName("汪星人");
-        songListInfo2.save();
-        date = new Date(System.currentTimeMillis());
-        sdf = new SimpleDateFormat("yy年MM月dd日 HH:mm:ss");
-        currentTime = sdf.format(date);
-        songListInfo3.setSongListId((int)System.currentTimeMillis() + 3);
-        songListInfo3.setBuildTime(currentTime);
-        songListInfo3.setName("Test");
-        songListInfo3.save();
-        date = new Date(System.currentTimeMillis());
-        sdf = new SimpleDateFormat("yy年MM月dd日 HH:mm:ss");
-        currentTime = sdf.format(date);
-        songListInfo4.setSongListId((int)System.currentTimeMillis() + 4);
-        songListInfo4.setBuildTime(currentTime);
-        songListInfo4.setName("女神");
-        songListInfo4.save();
-        myFavorite.save();
     }
 
     public static boolean isMyFavorite(long songId){
@@ -163,7 +142,11 @@ public class MusicUtils {
     }
 
     public static void delForSongList(long songId, int songListId){
-        LitePal.deleteAll(SongList.class,"songListId = ? and songId = ?",String.valueOf(songListId),String.valueOf(songId));
+        if (LitePal.select("*").where("songListId = ? and songId = ?",String.valueOf(songListId),String.valueOf(songId)).find(SongList.class).isEmpty()){
+            Toast.makeText(MyApplication.getContext(),"歌曲不存在，请刷新",Toast.LENGTH_SHORT).show();
+        } else {
+            LitePal.deleteAll(SongList.class, "songListId = ? and songId = ?", String.valueOf(songListId), String.valueOf(songId));
+        }
     }
 
     public static List<SongList> getSongList(int songListId){
@@ -188,7 +171,7 @@ public class MusicUtils {
         return musicList;
     }
 
-    public static void newSongList(String name) {
+    public static SongListInfo getNewSongList(String name) {
         SongListInfo songListInfo1 = new SongListInfo();
         Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
@@ -197,6 +180,7 @@ public class MusicUtils {
         songListInfo1.setBuildTime(currentTime);
         songListInfo1.setName(name);
         songListInfo1.save();
+        return songListInfo1;
     }
 
     public static String getSongListNameForId(int songListId){
@@ -207,5 +191,11 @@ public class MusicUtils {
             return songListInfo.getName();
         }
         return "Unknown";
+    }
+
+    public static void removeSongListInfo(int songListId){
+        LitePal.deleteAll(SongListInfo.class,"songListId = ?",String.valueOf(songListId));
+        LitePal.deleteAll(SongList.class,"songListId = ?",String.valueOf(songListId));
+        SongListInfos = getSongListInfo();
     }
 }

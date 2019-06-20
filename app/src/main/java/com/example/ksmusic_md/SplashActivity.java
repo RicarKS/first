@@ -48,14 +48,12 @@ public class SplashActivity extends AppCompatActivity {
     };
 
     public void enterHome(){
-        Log.d("datatest","enterHome");
         Intent intent = new Intent(SplashActivity.this,MusicListActivity.class);
         startActivity(intent);
         finish();
     }
 
     private void initPermission(){
-        Log.d("datatest","initPermission");
         mPermissionList.clear();
         for(int i = 0; i < permissions.length; i++){
             if (ContextCompat.checkSelfPermission(this,permissions[i]) != PackageManager.PERMISSION_GRANTED){

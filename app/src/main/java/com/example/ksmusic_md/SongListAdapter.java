@@ -45,6 +45,10 @@ public class SongListAdapter extends RecyclerView.Adapter<SongListAdapter.ViewHo
         //mSongListInfos.add(songListInfo);
     }
 
+    public void setList(List<SongListInfo> songListInfos){
+        mSongListInfos = songListInfos;
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, final int i) {

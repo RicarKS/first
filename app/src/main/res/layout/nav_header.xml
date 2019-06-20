@@ -29,6 +29,6 @@
         android:layout_above="@id/nav_artist_and_album"
         android:text=""
         android:textColor="#FFF"
-        android:textSize="17sp"/>
+        android:textSize="17sp" />
 
 </RelativeLayout>

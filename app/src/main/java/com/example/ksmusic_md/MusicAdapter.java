@@ -63,6 +63,7 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.ViewHolder> 
                 Intent intent = new Intent(MyApplication.getContext(),OnPlayingActivity.class);
                 intent.putExtra("position",position);
                 intent.putExtras(bundle);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 MyApplication.getContext().startActivity(intent);
             }
         });
@@ -70,12 +71,14 @@ public class MusicAdapter extends RecyclerView.Adapter<MusicAdapter.ViewHolder> 
             @Override
             public void onClick(View v) {
                 //添加进我喜欢的音乐
-                holder.myFavoritePic.setImageResource(R.drawable.my_favorite);
                 int position = holder.getAdapterPosition();
-                SongList songList = new SongList();
-                songList.setSongId(mList.get(position).getSongId());
-                songList.setSongListId(903);
-                songList.save();
+                if(MusicUtils.isMyFavorite(mList.get(position).getSongId())){
+                    holder.myFavoritePic.setImageResource(R.drawable.is_not_my_favorite);
+                    MusicUtils.delForSongList(mList.get(position).getSongId(),903);
+                } else {
+                    holder.myFavoritePic.setImageResource(R.drawable.my_favorite);
+                    MusicUtils.addToSongList(mList.get(position).getSongId(), 903);
+                }
             }
         });
         return holder;
