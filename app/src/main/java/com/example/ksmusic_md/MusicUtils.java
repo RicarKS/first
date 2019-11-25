@@ -46,14 +46,6 @@ public class MusicUtils {
                 music.setAlbumId(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)));
                 music.setDuration(cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)));
                 music.setPath(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)));
-                /*if(music.getSize() > 1024 * 800){
-                    //大于800K
-                    if(music.getName().contains("-")){
-                        String[] str = music.getName().split("-");
-                        music.setName(str[1]);
-                    }
-                    String time = formatime(music.getDuration());
-                }*/
                 music.save();
                 musicList.add(music);
             }
